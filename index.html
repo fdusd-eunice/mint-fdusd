@@ -3,31 +3,131 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Collect FDUSD at SuiFest</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <title>Stamp Collection Event with Lucky Draw</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8"></script> <!-- Updated to a specific version -->
   <style>
     body { font-family: Arial, sans-serif; text-align: center; }
     #reader, #drawSection { width: 100%; max-width: 500px; margin: 20px auto; display: none; }
     #result { color: green; font-weight: bold; }
+    #error { color: red; display: none; }
   </style>
 </head>
 <body>
-  <h1>Collect FDUSD at SuiFest</h1>
+  <h1>Stamp Collection Event</h1>
   <div id="login">
     <button id="loginBtn">Start (Test Mode)</button>
   </div>
   <div id="reader"></div>
-  <p>FDUSD Collected: <span id="stampCount">0</span>/10</p>
+  <p>Stamps Collected: <span id="stampCount">0</span>/10</p>
   <p>Lucky Draw Entries: <span id="entries">0</span></p>
   <div id="drawSection">
     <button id="drawBtn">Draw Now</button>
     <p id="result"></p>
     <p>Redemption Code (if won): <span id="code"></span></p>
   </div>
+  <p id="error"></p>
 
   <script>
     let stampCount = 0, entries = 0;
+    let html5QrCode;
 
     document.getElementById('loginBtn').addEventListener('click', () => {
       document.getElementById('login').style.display = 'none';
-      document.getElementById('reader').style.display = '
+      document.getElementById('reader').style.display = 'block';
+      initializeScanner();
+    });
+
+    function initializeScanner() {
+      Html5Qrcode.getCameras()
+        .then(devices => {
+          if (devices && devices.length) {
+            const cameraId = devices[0].id; // Use the first available camera
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+              { deviceId: cameraId },
+              { fps: 10, qrbox: 250 },
+              qrCodeMessage => {
+                const urlParams = new URLSearchParams(qrCodeMessage);
+                const stampId = urlParams.get('stamp');
+                if (stampId) {
+                  handleStampScan(stampId);
+                }
+              },
+              error => {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'Scan error: ' + error;
+              }
+            ).catch(err => {
+              document.getElementById('error').style.display = 'block';
+              document.getElementById('error').textContent = 'Failed to start scanner: ' + err;
+            });
+          } else {
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = 'No camera detected.';
+          }
+        })
+        .catch(err => {
+          document.getElementById('error').style.display = 'block';
+          document.getElementById('error').textContent = 'Camera access error: ' + err;
+        });
+    }
+
+    function handleStampScan(stampId) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          fetch(`/api/scan?stamp=${stampId}&loc=${encodeURIComponent(JSON.stringify(position))}`, {
+            method: 'GET', // Explicitly set method
+            headers: { 'Content-Type': 'application/json' }
+          })
+            .then(response => {
+              if (!response.ok) throw new Error('Network response was not ok');
+              return response.json();
+            })
+            .then(data => {
+              if (data.success) {
+                stampCount = data.stampCount;
+                entries = data.entries;
+                document.getElementById("stampCount").textContent = stampCount;
+                document.getElementById("entries").textContent = entries;
+                document.getElementById("drawSection").style.display = 'block';
+              } else {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = data.message;
+              }
+            })
+            .catch(error => {
+              document.getElementById('error').style.display = 'block';
+              document.getElementById('error').textContent = 'Error: ' + error.message;
+            });
+        },
+        error => {
+          document.getElementById('error').style.display = 'block';
+          document.getElementById('error').textContent = 'Location error: ' + error.message;
+        }
+      );
+    }
+
+    document.getElementById('drawBtn').addEventListener('click', () => {
+      if (entries > 0) {
+        if (Math.random() < 0.3) { // 30% win chance for testing
+          document.getElementById('result').textContent = 'Congratulations, you won!';
+          document.getElementById('code').textContent = 'TESTCODE' + Math.floor(Math.random() * 1000);
+          entries--;
+        } else {
+          document.getElementById('result').textContent = 'Sorry, try again next time!';
+          document.getElementById('code').textContent = '';
+          entries--;
+        }
+        document.getElementById("entries").textContent = entries;
+      } else {
+        alert('No entries left!');
+      }
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('unload', () => {
+      if (html5QrCode) html5QrCode.stop();
+    });
+  </script>
+</body>
+</html>
