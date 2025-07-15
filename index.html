@@ -1,0 +1,93 @@
+Here is the updated HTML file, renamed to `index.html`, with SSO removed for testing and mock lucky draw functionality added:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stamp Collection Event with Lucky Draw</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; }
+    #reader, #drawSection { width: 100%; max-width: 500px; margin: 20px auto; display: none; }
+    #result { color: green; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Stamp Collection Event</h1>
+  <div id="login">
+    <button id="loginBtn">Start (Test Mode)</button>
+  </div>
+  <div id="reader"></div>
+  <p>Stamps Collected: <span id="stampCount">0</span>/10</p>
+  <p>Lucky Draw Entries: <span id="entries">0</span></p>
+  <div id="drawSection">
+    <button id="drawBtn">Draw Now</button>
+    <p id="result"></p>
+    <p>Redemption Code (if won): <span id="code"></span></p>
+  </div>
+
+  <script>
+    let stampCount = 0, entries = 0;
+
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('reader').style.display = 'block';
+      const html5QrCode = new Html5Qrcode("reader");
+
+      Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length) {
+          html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            qrCodeMessage => {
+              if (stampCount < 10 && !localStorage.getItem(qrCodeMessage)) {
+                stampCount++;
+                entries = stampCount;
+                localStorage.setItem(qrCodeMessage, "true");
+                document.getElementById("stampCount").textContent = stampCount;
+                document.getElementById("entries").textContent = entries;
+                document.getElementById("drawSection").style.display = 'block';
+              }
+            },
+            error => {}
+          );
+        }
+      }).catch(err => console.log(err));
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(() => {}, () => alert("Location access needed"));
+      } else {
+        alert("Geolocation not supported");
+      }
+    });
+
+    document.getElementById('drawBtn').addEventListener('click', () => {
+      if (entries > 0) {
+        if (Math.random() < 0.3) { // 30% win chance for testing
+          document.getElementById('result').textContent = 'Congratulations, you won!';
+          document.getElementById('code').textContent = 'TESTCODE' + Math.floor(Math.random() * 1000);
+          entries--;
+        } else {
+          document.getElementById('result').textContent = 'Sorry, try again next time!';
+          document.getElementById('code').textContent = '';
+          entries--;
+        }
+        document.getElementById('entries').textContent = entries;
+      } else {
+        alert('No entries left!');
+      }
+    });
+  </script>
+</body>
+</html>
+```
+
+### Instructions:
+- Save this as `index.html` in your `mint-fdusd` repository.
+- Commit and push the changes to GitHub (`git add .`, `git commit -m "Update to index.html for testing"`, `git push`).
+- Redeploy on Vercel via the dashboard or run `vercel --prod` from your local folder.
+- Visit `mint-fdusd.vercel.app` to test the updated site.
+
+This version should resolve the blank page issue by aligning with Vercel's default entry point and providing basic functionality for testing. Let me know if you need further adjustments!
