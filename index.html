@@ -4,12 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stamp Collection Event with Lucky Draw</title>
-  <script src="https://unpkg.com/html5-qrcode@2.3.8"></script> <!-- Specific version for consistency -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8"></script>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; }
     #reader, #drawSection { width: 100%; max-width: 500px; margin: 20px auto; display: none; }
     #result { color: green; font-weight: bold; }
     #error { color: red; display: none; }
+    #status { color: blue; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -26,6 +27,7 @@
     <p>Redemption Code (if won): <span id="code"></span></p>
   </div>
   <p id="error"></p>
+  <p id="status"></p>
 
   <script>
     let stampCount = 0, entries = 0;
@@ -43,13 +45,15 @@
           if (devices && devices.length) {
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
-              { facingMode: "environment" }, // Use rear camera directly
+              { facingMode: "environment" }, // Rear camera
               { fps: 10, qrbox: 250 },
               qrCodeMessage => {
                 const urlParams = new URLSearchParams(qrCodeMessage);
                 const stampId = urlParams.get('stamp');
                 if (stampId) {
+                  document.getElementById('status').textContent = `Scanning stamp ${stampId}...`;
                   handleStampScan(stampId);
+                  html5QrCode.stop().then(() => initializeScanner()); // Restart after each scan
                 }
               },
               error => {
@@ -86,22 +90,26 @@
               if (data.success) {
                 stampCount = data.stampCount;
                 entries = data.entries;
-                document.getElementById("stampCount").textContent = stampCount;
-                document.getElementById("entries").textContent = entries;
-                document.getElementById("drawSection").style.display = 'block';
+                document.getElementById('stampCount').textContent = stampCount;
+                document.getElementById('entries').textContent = entries;
+                document.getElementById('drawSection').style.display = 'block';
+                document.getElementById('status').textContent = `Stamp ${stampId} recorded!`;
               } else {
                 document.getElementById('error').style.display = 'block';
                 document.getElementById('error').textContent = data.message;
+                document.getElementById('status').textContent = '';
               }
             })
             .catch(error => {
               document.getElementById('error').style.display = 'block';
-              document.getElementById('error').textContent = 'Error: ' + error.message;
+              document.getElementById('error').textContent = 'Error recording stamp: ' + error.message;
+              document.getElementById('status').textContent = '';
             });
         },
         error => {
           document.getElementById('error').style.display = 'block';
           document.getElementById('error').textContent = 'Location error: ' + error.message;
+          document.getElementById('status').textContent = '';
         }
       );
     }
@@ -117,13 +125,12 @@
           document.getElementById('code').textContent = '';
           entries--;
         }
-        document.getElementById("entries").textContent = entries;
+        document.getElementById('entries').textContent = entries;
       } else {
         alert('No entries left!');
       }
     });
 
-    // Cleanup on page unload
     window.addEventListener('unload', () => {
       if (html5QrCode) html5QrCode.stop();
     });
