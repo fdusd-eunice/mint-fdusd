@@ -1,4 +1,4 @@
-
+  
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,17 +40,17 @@
             { facingMode: "environment" },
             { fps: 10, qrbox: 250 },
             qrCodeMessage => {
-  const urlParams = new URLSearchParams(qrCodeMessage);
-  const stampId = urlParams.get('stamp');
-  if (stampId && stampCount < 10 && !localStorage.getItem(stampId)) {
-    stampCount++;
-    entries = stampCount;
-    localStorage.setItem(stampId, "true");
-    document.getElementById("stampCount").textContent = stampCount;
-    document.getElementById("entries").textContent = entries;
-    document.getElementById("drawSection").style.display = 'block';
-  }
-}
+              const urlParams = new URLSearchParams(qrCodeMessage);
+              const stampId = urlParams.get('stamp');
+              if (stampId && stampCount < 10 && !localStorage.getItem(stampId)) {
+                stampCount++;
+                entries = stampCount;
+                localStorage.setItem(stampId, "true");
+                document.getElementById("stampCount").textContent = stampCount;
+                document.getElementById("entries").textContent = entries;
+                document.getElementById("drawSection").style.display = 'block';
+              }
+            }
       }).catch(err => console.log(err));
 
       if (navigator.geolocation) {
