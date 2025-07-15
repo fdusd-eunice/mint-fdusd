@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stamp Collection Event with Lucky Draw</title>
-  <script src="https://unpkg.com/html5-qrcode@2.3.8"></script> <!-- Updated to a specific version -->
+  <title>Collect FDUSD</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8"></script> <!-- Specific version for consistency -->
   <style>
     body { font-family: Arial, sans-serif; text-align: center; }
     #reader, #drawSection { width: 100%; max-width: 500px; margin: 20px auto; display: none; }
@@ -13,12 +13,12 @@
   </style>
 </head>
 <body>
-  <h1>Stamp Collection Event</h1>
+  <h1>Collect FDUSD</h1>
   <div id="login">
     <button id="loginBtn">Start (Test Mode)</button>
   </div>
   <div id="reader"></div>
-  <p>Stamps Collected: <span id="stampCount">0</span>/10</p>
+  <p>FDUSD Collected: <span id="stampCount">0</span>/10</p>
   <p>Lucky Draw Entries: <span id="entries">0</span></p>
   <div id="drawSection">
     <button id="drawBtn">Draw Now</button>
@@ -41,10 +41,13 @@
       Html5Qrcode.getCameras()
         .then(devices => {
           if (devices && devices.length) {
-            const cameraId = devices[0].id; // Use the first available camera
+            let rearCamera = devices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
+            if (!rearCamera) rearCamera = devices[0]; // Fallback to first camera if no rear found
+            const cameraId = rearCamera.deviceId;
+
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
-              { deviceId: cameraId },
+              { deviceId: cameraId, facingMode: { exact: "environment" } }, // Explicitly set rear camera
               { fps: 10, qrbox: 250 },
               qrCodeMessage => {
                 const urlParams = new URLSearchParams(qrCodeMessage);
@@ -76,7 +79,7 @@
       navigator.geolocation.getCurrentPosition(
         position => {
           fetch(`/api/scan?stamp=${stampId}&loc=${encodeURIComponent(JSON.stringify(position))}`, {
-            method: 'GET', // Explicitly set method
+            method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           })
             .then(response => {
