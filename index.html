@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Collect FDUSD</title>
+  <title>Stamp Collection Event with Lucky Draw</title>
   <script src="https://unpkg.com/html5-qrcode@2.3.8"></script> <!-- Specific version for consistency -->
   <style>
     body { font-family: Arial, sans-serif; text-align: center; }
@@ -13,12 +13,12 @@
   </style>
 </head>
 <body>
-  <h1>Collect FDUSD</h1>
+  <h1>Stamp Collection Event</h1>
   <div id="login">
     <button id="loginBtn">Start (Test Mode)</button>
   </div>
   <div id="reader"></div>
-  <p>FDUSD Collected: <span id="stampCount">0</span>/10</p>
+  <p>Stamps Collected: <span id="stampCount">0</span>/10</p>
   <p>Lucky Draw Entries: <span id="entries">0</span></p>
   <div id="drawSection">
     <button id="drawBtn">Draw Now</button>
@@ -41,13 +41,9 @@
       Html5Qrcode.getCameras()
         .then(devices => {
           if (devices && devices.length) {
-            let rearCamera = devices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
-            if (!rearCamera) rearCamera = devices[0]; // Fallback to first camera if no rear found
-            const cameraId = rearCamera.deviceId;
-
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
-              { deviceId: cameraId, facingMode: { exact: "environment" } }, // Explicitly set rear camera
+              { facingMode: "environment" }, // Use rear camera directly
               { fps: 10, qrbox: 250 },
               qrCodeMessage => {
                 const urlParams = new URLSearchParams(qrCodeMessage);
