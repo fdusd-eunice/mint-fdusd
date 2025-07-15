@@ -40,18 +40,17 @@
             { facingMode: "environment" },
             { fps: 10, qrbox: 250 },
             qrCodeMessage => {
-              if (stampCount < 10 && !localStorage.getItem(qrCodeMessage)) {
-                stampCount++;
-                entries = stampCount;
-                localStorage.setItem(qrCodeMessage, "true");
-                document.getElementById("stampCount").textContent = stampCount;
-                document.getElementById("entries").textContent = entries;
-                document.getElementById("drawSection").style.display = 'block';
-              }
-            },
-            error => {}
-          );
-        }
+  const urlParams = new URLSearchParams(qrCodeMessage);
+  const stampId = urlParams.get('stamp');
+  if (stampId && stampCount < 10 && !localStorage.getItem(stampId)) {
+    stampCount++;
+    entries = stampCount;
+    localStorage.setItem(stampId, "true");
+    document.getElementById("stampCount").textContent = stampCount;
+    document.getElementById("entries").textContent = entries;
+    document.getElementById("drawSection").style.display = 'block';
+  }
+}
       }).catch(err => console.log(err));
 
       if (navigator.geolocation) {
